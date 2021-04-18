@@ -1,0 +1,53 @@
+- hosts: all
+  vars_files:
+          - vars.yml
+
+  tasks:
+  - name: "install httpd rpm"
+    package:
+            name: "httpd"
+            state: present
+
+
+  - file:
+          state: directory
+          path: "{{ doc_root }}"
+
+
+  - name: "changing the config file as /etc/httpd/conf.d"        
+    template:
+          dest: "/etc/httpd/conf.d/httpd.conf"
+          src: "httpd.conf"
+
+    notify:
+    - restart httpd
+
+  - name: "copying the html file in new document root"
+    copy:
+          dest: "{{ doc_root }}/index.html"
+          src : webpage.html
+
+  
+  - name: " starting the sevice"
+    service:
+          name: "httpd"
+          state: started
+          enabled: yes
+          
+  - firewalld:
+          port: "{{ httpd_port }}/tcp"
+          state: disabled
+          permanent: yes
+         
+          
+
+  - selinux:
+         state: disabled
+
+
+ 
+  handlers:
+  - name: restart httpd
+    service:
+            name: "httpd"
+            state: restarted
